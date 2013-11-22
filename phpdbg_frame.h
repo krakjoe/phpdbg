@@ -14,52 +14,23 @@
    +----------------------------------------------------------------------+
    | Authors: Felipe Pena <felipe@php.net>                                |
    | Authors: Joe Watkins <joe.watkins@live.co.uk>                        |
+   | Authors: Bob Weinand <bwoebi@php.net>                                |
    +----------------------------------------------------------------------+
 */
 
-#ifndef PHPDBG_PROMPT_H
-#define PHPDBG_PROMPT_H
+#ifndef PHPDBG_FRAME_H
+#define PHPDBG_FRAME_H
 
-/* {{{ */
-void phpdbg_init(char *init_file, size_t init_file_len, zend_bool use_default TSRMLS_DC);
-int phpdbg_interactive(TSRMLS_D);
-int phpdbg_compile(TSRMLS_D);
-void phpdbg_clean(zend_bool full TSRMLS_DC); /* }}} */
+#include "php.h"
 
-/* {{{ phpdbg command handlers */
-PHPDBG_COMMAND(exec);
-PHPDBG_COMMAND(compile);
-PHPDBG_COMMAND(step);
-PHPDBG_COMMAND(next);
-PHPDBG_COMMAND(run);
-PHPDBG_COMMAND(eval);
-PHPDBG_COMMAND(until);
-PHPDBG_COMMAND(finish);
-PHPDBG_COMMAND(leave);
-PHPDBG_COMMAND(frame);
-PHPDBG_COMMAND(print);
-PHPDBG_COMMAND(break);
-PHPDBG_COMMAND(back);
-PHPDBG_COMMAND(list);
-PHPDBG_COMMAND(info);
-PHPDBG_COMMAND(clean);
-PHPDBG_COMMAND(clear);
-PHPDBG_COMMAND(help);
-PHPDBG_COMMAND(quiet);
-PHPDBG_COMMAND(aliases);
-PHPDBG_COMMAND(shell);
-PHPDBG_COMMAND(oplog);
-PHPDBG_COMMAND(register);
-PHPDBG_COMMAND(quit); /* }}} */
+typedef struct {
+	long num;
 
-/* {{{ prompt commands */
-extern const phpdbg_command_t phpdbg_prompt_commands[]; /* }}} */
+	zend_execute_data *execute_data;
+} phpdbg_frame;
 
-/* {{{ */
-#if PHP_VERSION_ID >= 50500
-void phpdbg_execute_ex(zend_execute_data *execute_data TSRMLS_DC);
-#else
-void phpdbg_execute_ex(zend_op_array *op_array TSRMLS_DC);
-#endif /* }}} */
+void switch_to_frame(int frame TSRMLS_DC);
 
-#endif /* PHPDBG_PROMPT_H */
+void restore_frame(TSRMLS_D);
+
+#endif /* PHPDBG_FRAME_H */

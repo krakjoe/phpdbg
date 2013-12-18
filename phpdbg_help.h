@@ -85,8 +85,8 @@ static const phpdbg_command_t phpdbg_help_commands[] = {
 };
 
 #define phpdbg_help_header() \
-	phpdbg_notice("Welcome to phpdbg, the interactive PHP debugger, v%s", PHPDBG_VERSION);
+	NULL;
 #define phpdbg_help_footer() \
-	phpdbg_notice("Please report bugs to <%s>", PHPDBG_ISSUES);
+	phpdbg_notice("Version v%s; please report bugs to <%s>", PHPDBG_VERSION, PHPDBG_ISSUES);
 
 #endif /* PHPDBG_HELP_H */

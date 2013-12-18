@@ -50,6 +50,7 @@ PHPDBG_HELP(quiet);
 PHPDBG_HELP(list);
 PHPDBG_HELP(set);
 PHPDBG_HELP(register);
+PHPDBG_HELP(version);
 PHPDBG_HELP(options);
 PHPDBG_HELP(source);
 PHPDBG_HELP(shell);
@@ -58,29 +59,30 @@ PHPDBG_HELP(shell);
  * Commands
  */
 static const phpdbg_command_t phpdbg_help_commands[] = {
-	PHPDBG_COMMAND_D_EX(exec,     "the execution context should be a valid path",                                    'e', help_exec,    NULL, 0),
-	PHPDBG_COMMAND_D_EX(compile,  "allow inspection of code before execution",                                       'c', help_compile, NULL, 0),
-	PHPDBG_COMMAND_D_EX(step,     "step through execution to break at every opcode",                                 's', help_step,    NULL, 0),
-	PHPDBG_COMMAND_D_EX(next,     "continue executing while stepping or after breaking",                             'n', help_next,    NULL, 0),
-	PHPDBG_COMMAND_D_EX(run,      "execute inside the phpdbg vm",                                                    'r', help_run,     NULL, 0),
-	PHPDBG_COMMAND_D_EX(eval,     "access to eval() allows affecting the environment",                               'E', help_eval,    NULL, 0),
-	PHPDBG_COMMAND_D_EX(until,    "continue until the current line is executed",                                     'u', help_until,   NULL, 0),
-	PHPDBG_COMMAND_D_EX(finish,   "continue until the current function has returned",                                'F', help_finish,  NULL, 0),
-	PHPDBG_COMMAND_D_EX(leave,    "continue until the current function is returning",                                'L', help_leave,   NULL, 0),
-	PHPDBG_COMMAND_D_EX(print,    "print context information or instructions",                                       'p', help_print,   NULL, 0),
-	PHPDBG_COMMAND_D_EX(break,    "breakpoints allow execution interruption",                                        'b', help_break,   NULL, 0),
-	PHPDBG_COMMAND_D_EX(clean,    "resetting the environment is useful while debugging",                             'X', help_clean,   NULL, 0),
-	PHPDBG_COMMAND_D_EX(clear,    "reset breakpoints to execute without interruption",                               'c', help_clear,   NULL, 0),
-	PHPDBG_COMMAND_D_EX(info,     "quick access to useful information on the console",                               'i', help_info,    NULL, 0),
-	PHPDBG_COMMAND_D_EX(back,     "show debug backtrace information during execution",                               't', help_back,    NULL, 0),
-	PHPDBG_COMMAND_D_EX(frame,    "switch to a frame in the current stack for inspection",                           'f', help_frame,   NULL, 0),
-	PHPDBG_COMMAND_D_EX(quiet,    "be quiet during execution",                                                       'Q', help_quiet,   NULL, 0),
-	PHPDBG_COMMAND_D_EX(list,     "list code gives you quick access to code",                                        'l', help_list,    NULL, 0),
-	PHPDBG_COMMAND_D_EX(set,      "configure how phpdbg looks and behaves",                                          'S', help_set,     NULL, 0),
-	PHPDBG_COMMAND_D_EX(register, "register a function for use as a command",                                        'R', help_register,NULL, 0),
-	PHPDBG_COMMAND_D_EX(options,  "show information about command line options",                                     'o', help_options, NULL, 0),
-	PHPDBG_COMMAND_D_EX(source,   "load a phpdbginit file at the console",                                           '.', help_source,  NULL, 0),
-	PHPDBG_COMMAND_D_EX(shell,    "execute system commands with direct shell access",                                '-', help_shell,   NULL, 0),
+	PHPDBG_COMMAND_D_EX(exec,     "the execution context should be a valid path",                                    'e', help_exec,     NULL, 0),
+	PHPDBG_COMMAND_D_EX(compile,  "allow inspection of code before execution",                                       'c', help_compile,  NULL, 0),
+	PHPDBG_COMMAND_D_EX(step,     "step through execution to break at every opcode",                                 's', help_step,     NULL, 0),
+	PHPDBG_COMMAND_D_EX(next,     "continue executing while stepping or after breaking",                             'n', help_next,     NULL, 0),
+	PHPDBG_COMMAND_D_EX(run,      "execute inside the phpdbg vm",                                                    'r', help_run,      NULL, 0),
+	PHPDBG_COMMAND_D_EX(eval,     "access to eval() allows affecting the environment",                               'E', help_eval,     NULL, 0),
+	PHPDBG_COMMAND_D_EX(until,    "continue until the current line is executed",                                     'u', help_until,    NULL, 0),
+	PHPDBG_COMMAND_D_EX(finish,   "continue until the current function has returned",                                'F', help_finish,   NULL, 0),
+	PHPDBG_COMMAND_D_EX(leave,    "continue until the current function is returning",                                'L', help_leave,    NULL, 0),
+	PHPDBG_COMMAND_D_EX(print,    "print context information or instructions",                                       'p', help_print,    NULL, 0),
+	PHPDBG_COMMAND_D_EX(break,    "breakpoints allow execution interruption",                                        'b', help_break,    NULL, 0),
+	PHPDBG_COMMAND_D_EX(clean,    "resetting the environment is useful while debugging",                             'X', help_clean,    NULL, 0),
+	PHPDBG_COMMAND_D_EX(clear,    "reset breakpoints to execute without interruption",                               'c', help_clear,    NULL, 0),
+	PHPDBG_COMMAND_D_EX(info,     "quick access to useful information on the console",                               'i', help_info,     NULL, 0),
+	PHPDBG_COMMAND_D_EX(back,     "show debug backtrace information during execution",                               't', help_back,     NULL, 0),
+	PHPDBG_COMMAND_D_EX(frame,    "switch to a frame in the current stack for inspection",                           'f', help_frame,    NULL, 0),
+	PHPDBG_COMMAND_D_EX(quiet,    "be quiet during execution",                                                       'Q', help_quiet,    NULL, 0),
+	PHPDBG_COMMAND_D_EX(list,     "list code gives you quick access to code",                                        'l', help_list,     NULL, 0),
+	PHPDBG_COMMAND_D_EX(set,      "configure how phpdbg looks and behaves",                                          'S', help_set,      NULL, 0),
+	PHPDBG_COMMAND_D_EX(register, "register a function for use as a command",                                        'R', help_register, NULL, 0),
+	PHPDBG_COMMAND_D_EX(version,  "the version of phpdbg",                                                           'v', help_version,  NULL, 0),
+	PHPDBG_COMMAND_D_EX(options,  "show information about command line options",                                     'o', help_options,  NULL, 0),
+	PHPDBG_COMMAND_D_EX(source,   "load a phpdbginit file at the console",                                           '.', help_source,   NULL, 0),
+	PHPDBG_COMMAND_D_EX(shell,    "execute system commands with direct shell access",                                '-', help_shell,    NULL, 0),
 	PHPDBG_END_COMMAND
 };
 

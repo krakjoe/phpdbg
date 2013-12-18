@@ -566,6 +566,12 @@ PHPDBG_HELP(shell) /* {{{ */
 	return SUCCESS;
 } /* }}} */
 
+PHPDBG_HELP(version) /* {{{ */
+{
+    phpdbg_notice("Version of phpdbg: %s", PHPDBG_VERSION);
+    return SUCCESS;
+} /* }}} */
+
 PHPDBG_HELP(options) /* {{{ */
 {
 	phpdbg_help_header();

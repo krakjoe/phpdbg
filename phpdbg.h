@@ -149,6 +149,7 @@
 #define PHPDBG_URL "http://phpdbg.com"
 #define PHPDBG_ISSUES "http://github.com/krakjoe/phpdbg/issues"
 #define PHPDBG_VERSION "0.3.0-dev"
+#define PHPDBG_VERSION_ID 300
 #define PHPDBG_INIT_FILENAME ".phpdbginit"
 /* }}} */
 

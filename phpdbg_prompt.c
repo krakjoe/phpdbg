@@ -1595,12 +1595,25 @@ next:
 		PHPDBG_G(last_line) = execute_data->opline->lineno;
 
 		/* stupid hack to make zend_do_fcall_common_helper return ZEND_VM_ENTER() instead of recursively calling zend_execute() and eventually segfaulting */
-		if ((execute_data->opline->opcode == ZEND_DO_FCALL_BY_NAME || execute_data->opline->opcode == ZEND_DO_FCALL) && execute_data->function_state.function->type == ZEND_USER_FUNCTION) {
+		if ((execute_data->opline->opcode == ZEND_DO_FCALL_BY_NAME && execute_data->call->fbc->type == ZEND_USER_FUNCTION) || execute_data->opline->opcode == ZEND_DO_FCALL) {
+			zend_function *fbc = execute_data->call ? execute_data->call->fbc : NULL;
+			if (execute_data->opline->opcode == ZEND_DO_FCALL) {
+				if ((fbc = CACHED_PTR(execute_data->opline->op1.literal->cache_slot))) {
+					CACHE_PTR(execute_data->opline->op1.literal->cache_slot, fbc);
+				} else {
+					zval *fname = execute_data->opline->op1.zv;
+
+					zend_hash_quick_find(EG(function_table), Z_STRVAL_P(fname), Z_STRLEN_P(fname)+1, Z_HASH_P(fname), (void **) &fbc);
+				}
+			}
+
+			if (fbc && fbc->type == ZEND_USER_FUNCTION) {
 #if PHP_VERSION_ID < 50500
-			zend_execute = execute;
+				zend_execute = execute;
 #else
-			zend_execute_ex = execute_ex;
+				zend_execute_ex = execute_ex;
 #endif
+			}
 		}
 		PHPDBG_G(vmret) = execute_data->opline->handler(execute_data TSRMLS_CC);
 #if PHP_VERSION_ID < 50500

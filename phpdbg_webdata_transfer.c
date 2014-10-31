@@ -31,6 +31,7 @@ PHPDBG_API void phpdbg_webdata_compress(char **msg, int *len TSRMLS_DC) {
 	zval zv6 = {{0}}, *zvp6 = &zv6;
 	zval zv7 = {{0}}, *zvp7 = &zv7;
 	zval zv8 = {{0}}, *zvp8 = &zv8;
+	zval zv9 = {{0}}, *zvp9 = &zv9;
 
 	array_init(&array);
 	ht = Z_ARRVAL(array);
@@ -76,6 +77,13 @@ PHPDBG_API void phpdbg_webdata_compress(char **msg, int *len TSRMLS_DC) {
 		}
 		Z_SET_REFCOUNT(zv6, 2);
 		zend_hash_add(ht, "sapi_name", sizeof("sapi_name"), &zvp6, sizeof(zval *), NULL);
+	}
+
+	/* print phpinfo() as text? */
+	{
+		Z_LVAL(zv9) = sapi_module.phpinfo_as_text;
+		Z_TYPE(zv9) = IS_LONG;
+		zend_hash_add(ht, "phpinfo_as_text", sizeof("phpinfo_as_text"), &zvp9, sizeof(zval *), NULL);
 	}
 
 	/* handle modules / extensions */

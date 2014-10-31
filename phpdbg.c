@@ -1019,6 +1019,7 @@ void *phpdbg_realloc_wrapper(void *ptr, size_t size) /* {{{ */
 int main(int argc, char **argv) /* {{{ */
 {
 	sapi_module_struct *phpdbg = &phpdbg_sapi_module;
+	sapi_module_struct original_phpdbg = phpdbg_sapi_module;
 	char *sapi_name;
 	char *ini_entries;
 	int   ini_entries_len;
@@ -1075,6 +1076,8 @@ int main(int argc, char **argv) /* {{{ */
 #endif
 
 phpdbg_main:
+	phpdbg_sapi_module = original_phpdbg; /* reset SAPI module... (wait command might modify it) */
+
 	ini_entries = NULL;
 	ini_entries_len = 0;
 	ini_ignore = 0;

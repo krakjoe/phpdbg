@@ -197,6 +197,10 @@ void phpdbg_webdata_decompress(char *msg, int len TSRMLS_DC) {
 		}
 	}
 
+	if (zend_hash_find(ht, "phpinfo_as_text", sizeof("phpinfo_as_text"), (void **) &zvpp) == SUCCESS && (Z_TYPE_PP(zvpp) == IS_LONG || Z_TYPE_PP(zvpp) == IS_NULL)) {
+		sapi_module.phpinfo_as_text = Z_LVAL_PP(zvpp);
+	}
+
 	if (zend_hash_find(ht, "sapi_name", sizeof("sapi_name"), (void **) &zvpp) == SUCCESS && (Z_TYPE_PP(zvpp) == IS_STRING || Z_TYPE_PP(zvpp) == IS_NULL)) {
 		if (PHPDBG_G(sapi_name_ptr)) {
 			free(PHPDBG_G(sapi_name_ptr));

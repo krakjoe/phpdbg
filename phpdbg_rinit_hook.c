@@ -63,7 +63,11 @@ static PHP_RINIT_FUNCTION(phpdbg_webhelper) /* {{{ */
 		strcpy(sock.sun_path, PHPDBG_WG(path));
 
 		if (connect(s, (struct sockaddr *)&sock, len) == -1) {
-			zend_error(E_ERROR, "Unable to connect to UNIX domain socket at %s defined by phpdbg.path ini setting. Reason: %s", PHPDBG_WG(path), strerror(errno));
+/*			zend_error(E_ERROR, "Unable to connect to UNIX domain socket at %s defined by phpdbg.path ini setting. Reason: %s", PHPDBG_WG(path), strerror(errno)); */
+			free(sock.sun_path);
+			close(s);
+
+			return SUCCESS;
 		}
 
 		char *msg = NULL;
@@ -78,6 +82,8 @@ static PHP_RINIT_FUNCTION(phpdbg_webhelper) /* {{{ */
 		}
 
 		close(s);
+
+		free(sock.sun_path);
 
 		php_output_flush_all(TSRMLS_C);
 		zend_bailout();

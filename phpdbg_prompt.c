@@ -1595,8 +1595,13 @@ next:
 		PHPDBG_G(last_line) = execute_data->opline->lineno;
 
 		/* stupid hack to make zend_do_fcall_common_helper return ZEND_VM_ENTER() instead of recursively calling zend_execute() and eventually segfaulting */
+#if PHP_VERSION_ID < 50500
+		if ((execute_data->opline->opcode == ZEND_DO_FCALL_BY_NAME && execute_data->fbc->type == ZEND_USER_FUNCTION) || execute_data->opline->opcode == ZEND_DO_FCALL) {
+			zend_function *fbc = execute_data->fbc;
+#else
 		if ((execute_data->opline->opcode == ZEND_DO_FCALL_BY_NAME && execute_data->call->fbc->type == ZEND_USER_FUNCTION) || execute_data->opline->opcode == ZEND_DO_FCALL) {
 			zend_function *fbc = execute_data->call ? execute_data->call->fbc : NULL;
+#endif
 			if (execute_data->opline->opcode == ZEND_DO_FCALL) {
 				if ((fbc = CACHED_PTR(execute_data->opline->op1.literal->cache_slot))) {
 					CACHE_PTR(execute_data->opline->op1.literal->cache_slot, fbc);

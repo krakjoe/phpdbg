@@ -587,7 +587,7 @@ PHPDBG_API void phpdbg_xml_var_dump(zval **zv TSRMLS_DC) {
 				break;
 			case IS_STRING:
 				phpdbg_xml("<string refstatus=\"%s\" length=\"%d\" value=\"%.*s\" />", COMMON, Z_STRLEN_PP(zv), Z_STRLEN_PP(zv), Z_STRVAL_PP(zv));
-					break;
+				break;
 			case IS_ARRAY:
 				myht = Z_ARRVAL_PP(zv);
 				if (++myht->nApplyCount > 1) {
@@ -632,7 +632,7 @@ head_done:
 				break;
 			case IS_RESOURCE: {
 				const char *type_name = zend_rsrc_list_get_rsrc_type(Z_LVAL_PP(zv) TSRMLS_CC);
-				phpdbg_xml("<resource refstatus=\"%s\" id=\"%ld\" type=\"%ld\" />", COMMON, Z_LVAL_PP(zv), type_name ? type_name : "unknown");
+				phpdbg_xml("<resource refstatus=\"%s\" id=\"%ld\" type=\"%s\" />", COMMON, Z_LVAL_PP(zv), type_name ? type_name : "unknown");
 				break;
 			}
 			default:
@@ -640,3 +640,152 @@ head_done:
 		}
 	} phpdbg_end_try_access();
 }
+
+static int phpdbg_print_array_element_dump(zval **zv TSRMLS_DC, int num_args, va_list args, zend_hash_key *hash_key) {
+	int *len = va_arg(args, int *);
+	zend_bool *first = va_arg(args, zend_bool *);
+
+	if (*first) {
+		*first = 0;
+	} else {
+		*len -= phpdbg_out(", ");
+	}
+
+	if (*len < 0) {
+		phpdbg_out("...");
+		return ZEND_HASH_APPLY_STOP;
+	}
+
+	phpdbg_try_access {
+		if (hash_key->nKeyLength == 0) { /* numeric key */
+			*len -= phpdbg_out("%ld => ", hash_key->h);
+		} else { /* string key */
+			*len -= phpdbg_out("\"%.*s\" => ", hash_key->nKeyLength - 1, hash_key->arKey);
+		}
+	} phpdbg_catch_access {
+		*len -= phpdbg_out("???");
+		return 0;
+	} phpdbg_end_try_access();
+
+	*len = phpdbg_print_flat_zval_r(zv, *len TSRMLS_CC);
+
+	return 0;
+}
+
+static int phpdbg_print_object_property_dump(zval **zv TSRMLS_DC, int num_args, va_list args, zend_hash_key *hash_key) {
+	int *len = va_arg(args, int *);
+	zend_bool *first = va_arg(args, zend_bool *);
+
+	if (*first) {
+		*first = 0;
+	} else {
+		*len -= phpdbg_out(", ");
+	}
+
+	if (*len < 0) {
+		phpdbg_out("...");
+		return ZEND_HASH_APPLY_STOP;
+	}
+
+	phpdbg_try_access {
+		if (hash_key->nKeyLength == 0) { /* numeric key */
+			*len -= phpdbg_out("%ld => ", hash_key->h);
+		} else { /* string key */
+			const char *prop_name, *class_name;
+			int unmangle = zend_unmangle_property_name(hash_key->arKey, hash_key->nKeyLength - 1, &class_name, &prop_name);
+
+			if (class_name && unmangle == SUCCESS && class_name[0] != '*') {
+				*len -= phpdbg_out("\"%s:%s\" => ", class_name, prop_name);
+			} else {
+				*len -= phpdbg_out("\"%s\" => ", prop_name);
+			}
+		}
+	} phpdbg_catch_access {
+		*len -= phpdbg_out("???");
+		return 0;
+	} phpdbg_end_try_access();
+
+
+	*len = phpdbg_print_flat_zval_r(zv, *len TSRMLS_CC);
+
+	return 0;
+}
+
+#define COMMON (Z_ISREF_PP(zv) ? "&" : "")
+
+PHPDBG_API int phpdbg_print_flat_zval_r(zval **zv, int len TSRMLS_DC) {
+	HashTable *myht;
+	const char *class_name;
+	zend_uint class_name_len;
+	int (*element_dump_func)(zval ** TSRMLS_DC, int, va_list, zend_hash_key*);
+	int is_temp;
+	zend_bool first = 1;
+
+	phpdbg_try_access {
+		switch (Z_TYPE_PP(zv)) {
+			case IS_BOOL:
+				len -= phpdbg_out("%sbool(%s)", COMMON, Z_LVAL_PP(zv) ? "true" : "false");
+				break;
+			case IS_NULL:
+				len -= phpdbg_out("%snull", COMMON);
+				break;
+			case IS_LONG:
+				len -= phpdbg_out("%sint(%ld)", COMMON, Z_LVAL_PP(zv));
+				break;
+			case IS_DOUBLE:
+				len -= phpdbg_out("%sfloat(%.*G)", COMMON, (int) EG(precision), Z_DVAL_PP(zv));
+				break;
+			case IS_STRING:
+				len -= phpdbg_out("%sstring(%d) \"%.*s%s\"", COMMON, Z_STRLEN_PP(zv), Z_STRLEN_PP(zv) > len + 3 ? len < 3 ? 3 : len : Z_STRLEN_PP(zv), Z_STRVAL_PP(zv), Z_STRLEN_PP(zv) > len + 3 ? "..." : "");
+				break;
+			case IS_ARRAY:
+				myht = Z_ARRVAL_PP(zv);
+				if (++myht->nApplyCount > 1) {
+					len -= phpdbg_out("** RECURSION **");
+					--myht->nApplyCount;
+					break;
+				}
+				len -= phpdbg_out("%sarray(%d) [", COMMON, zend_hash_num_elements(myht));
+				element_dump_func = phpdbg_print_array_element_dump;
+				is_temp = 0;
+				goto head_done;
+			case IS_OBJECT:
+				myht = Z_OBJDEBUG_PP(zv, is_temp);
+				if (myht && ++myht->nApplyCount > 1) {
+					len -= phpdbg_out("** RECURSION **");
+					--myht->nApplyCount;
+					break;
+				}
+	
+				if (Z_OBJ_HANDLER(**zv, get_class_name)) {
+					Z_OBJ_HANDLER(**zv, get_class_name)(*zv, &class_name, &class_name_len, 0 TSRMLS_CC);
+					len -= phpdbg_out("%s%s#%u (%d) [", COMMON, class_name, Z_OBJ_HANDLE_PP(zv), myht ? zend_hash_num_elements(myht) : 0);
+					efree((char*)class_name);
+				} else {
+					len -= phpdbg_out("%s(Unknown class#%u (%d) [", COMMON, Z_OBJ_HANDLE_PP(zv), myht ? zend_hash_num_elements(myht) : 0);
+				}
+				element_dump_func = phpdbg_print_object_property_dump;
+head_done:
+				if (myht) {
+					zend_hash_apply_with_arguments(myht TSRMLS_CC, (apply_func_args_t) element_dump_func, 2, &len, &first);
+					--myht->nApplyCount;
+					if (is_temp) {
+						zend_hash_destroy(myht);
+						efree(myht);
+					}
+				}
+				len -= phpdbg_out("]");
+				break;
+			case IS_RESOURCE: {
+				const char *type_name = zend_rsrc_list_get_rsrc_type(Z_LVAL_PP(zv) TSRMLS_CC);
+				len -= phpdbg_out("%sresource(#%ld) \"%s\"", COMMON, Z_LVAL_PP(zv), type_name ? type_name : "unknown");
+				break;
+			}
+			default:
+				break;
+		}
+	} phpdbg_end_try_access();
+
+	return len;
+}
+

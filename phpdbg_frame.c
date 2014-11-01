@@ -111,8 +111,12 @@ static void phpdbg_dump_prototype(zval **tmp TSRMLS_DC) /* {{{ */
 	zval **funcname, **class, **type, **args, **argstmp;
 	char is_class;
 	int has_args = FAILURE;
+	int name_len;
+	zval **file = NULL;
 
 	zend_hash_find(Z_ARRVAL_PP(tmp), "function", sizeof("function"), (void **) &funcname);
+
+	zend_hash_find(Z_ARRVAL_PP(tmp), "file", sizeof("file"), (void **) &file);
 
 	if ((is_class = zend_hash_find(Z_ARRVAL_PP(tmp), "object", sizeof("object"), (void **) &class)) == FAILURE) {
 		is_class = zend_hash_find(Z_ARRVAL_PP(tmp), "class", sizeof("class"), (void **)&class);
@@ -137,7 +141,7 @@ static void phpdbg_dump_prototype(zval **tmp TSRMLS_DC) /* {{{ */
 		phpdbg_xml(" />");
 	}
 
-	phpdbg_out("%s%s%s(",
+	name_len = phpdbg_out("%s%s%s(",
 		is_class == FAILURE?"":Z_STRVAL_PP(class),
 		is_class == FAILURE?"":Z_STRVAL_PP(type),
 		Z_STRVAL_PP(funcname)
@@ -148,7 +152,13 @@ static void phpdbg_dump_prototype(zval **tmp TSRMLS_DC) /* {{{ */
 		const zend_function *func = NULL;
 		const zend_arg_info *arginfo = NULL;
 		int j = 0, m;
+		int termwidth = phpdbg_get_terminal_width(TSRMLS_C);
+		int arglen;
 		zend_bool is_variadic = 0;
+
+		if (termwidth < 120) {
+			termwidth = 120;
+		}
 
 		phpdbg_try_access {
 			/* assuming no autoloader call is necessary, class should have been loaded if it's in backtrace ... */
@@ -158,6 +168,13 @@ static void phpdbg_dump_prototype(zval **tmp TSRMLS_DC) /* {{{ */
 		} phpdbg_end_try_access();
 
 		m = func ? func->common.num_args : 0;
+
+		if (m) {
+			arglen = (termwidth - name_len - 20 - (file ? Z_STRLEN_PP(file) : 0)) / m - 10;
+			if (arglen < 20) {
+				arglen = 20;
+			}
+		}
 
 		zend_hash_internal_pointer_reset_ex(Z_ARRVAL_PP(args), &iterator);
 		while (zend_hash_get_current_data_ex(Z_ARRVAL_PP(args), (void **) &argstmp, &iterator) == SUCCESS) {
@@ -177,7 +194,10 @@ static void phpdbg_dump_prototype(zval **tmp TSRMLS_DC) /* {{{ */
 			}
 			++j;
 
-			zend_print_flat_zval_r(*argstmp TSRMLS_CC);
+			phpdbg_xml_var_dump(argstmp TSRMLS_CC);
+/*			zend_print_flat_zval_r(*argstmp TSRMLS_CC);*/
+			phpdbg_print_flat_zval_r(argstmp, arglen TSRMLS_CC);
+
 			zend_hash_move_forward_ex(Z_ARRVAL_PP(args), &iterator);
 
 			phpdbg_xml("</arg>");

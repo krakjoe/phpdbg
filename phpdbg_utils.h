@@ -111,6 +111,7 @@ PHPDBG_API int phpdbg_parse_variable(char *input, size_t len, HashTable *parent,
 PHPDBG_API int phpdbg_parse_variable_with_arg(char *input, size_t len, HashTable *parent, size_t i, phpdbg_parse_var_with_arg_func callback, zend_bool silent, void *arg TSRMLS_DC);
 
 PHPDBG_API void phpdbg_xml_var_dump(zval **zv TSRMLS_DC);
+PHPDBG_API int phpdbg_print_flat_zval_r(zval **zv, int len TSRMLS_DC);
 
 #ifdef ZTS
 #define PHPDBG_OUTPUT_BACKUP_DEFINES() \

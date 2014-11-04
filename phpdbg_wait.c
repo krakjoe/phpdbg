@@ -369,55 +369,87 @@ void phpdbg_webdata_decompress(char *msg, int len TSRMLS_DC) {
 
 PHPDBG_COMMAND(wait) /* {{{ */
 {
-	struct sockaddr_un local, remote;
-	int rlen, sr, sl;
-	unlink(PHPDBG_G(socket_path));
-	if (PHPDBG_G(socket_server_fd) == -1) {
-		int len;
-		PHPDBG_G(socket_server_fd) = sl = socket(AF_UNIX, SOCK_STREAM, 0);
+	char *errstr = NULL;
+	struct timeval tv;
 
-		local.sun_family = AF_UNIX;
-		strcpy(local.sun_path, PHPDBG_G(socket_path));
-		len = strlen(local.sun_path) + sizeof(local.sun_family);
-		if (bind(sl, (struct sockaddr *)&local, len) == -1) {
-			phpdbg_error("wait", "type=\"nosocket\" import=\"fail\"", "Unable to connect to UNIX domain socket at %s defined by phpdbg.path ini setting", PHPDBG_G(socket_path));
-			return FAILURE;
+	tv.tv_sec = 60;
+	tv.tv_usec = 0;
+
+	if (PHPDBG_G(socket_server_stream) == NULL) {
+		int err = 0;
+#ifndef _WIN32
+		zend_bool is_unix = strlen(PHPDBG_G(socket_path)) > 7 && !memcmp("unix://", PHPDBG_G(socket_path), 7);
+
+		/* Try to avoid address already in use style errors on UNIX domain sockets */
+		if (is_unix) {
+			unlink(PHPDBG_G(socket_path) + 7);
+		}
+#endif
+
+		PHPDBG_G(socket_server_stream) = php_stream_xport_create(PHPDBG_G(socket_path), strlen(PHPDBG_G(socket_path)), REPORT_ERRORS, STREAM_XPORT_BIND | STREAM_XPORT_LISTEN | STREAM_XPORT_SERVER, NULL, &tv, NULL, &errstr, &err);
+
+		if (PHPDBG_G(socket_server_stream) == NULL) {
+			phpdbg_error("wait", "type=\"nosocket\" import=\"fail\" socket=\"%s\" reason=\"%s\"", "Unable to connect to %s defined by phpdbg.path ini setting (%s)", PHPDBG_G(socket_path), errstr == NULL ? errno ? strerror(errno) : "Unknown error" : errstr);
+
+			if (errstr) {
+				efree(errstr);
+			}
+
+			return SUCCESS;
 		}
 
-		chmod(PHPDBG_G(socket_path), 0666);
+#ifndef _WIN32
+		if (is_unix) {
+			chmod(PHPDBG_G(socket_path) + 7, 0666);
+		}
+#endif
+	}
 
-		listen(sl, 2);
+	if (PHPDBG_G(socket_client_stream)) {
+		php_stream_close(PHPDBG_G(socket_client_stream));
+		PHPDBG_G(socket_client_stream) = NULL;
+	}
+
+	if (php_stream_xport_accept(PHPDBG_G(socket_server_stream), &PHPDBG_G(socket_client_stream), NULL, NULL, NULL, NULL, &tv, &errstr TSRMLS_CC) && PHPDBG_G(socket_client_stream)) {
+		phpdbg_error("wait", "type=\"nosocket\" import=\"fail\" socket=\"%s\" reason=\"%s\"", "Unable to connect to %s defined by phpdbg.path ini setting (%s)", PHPDBG_G(socket_path), errstr == NULL ? errno ? strerror(errno) : "Unknown error" : errstr);
 	} else {
-		sl = PHPDBG_G(socket_server_fd);
+		char msglen[5], *data;
+		int rcvd = 4;
+
+		if (php_stream_read(PHPDBG_G(socket_client_stream), msglen, rcvd) != 4) {
+			goto read_error;
+		}
+
+		rcvd = *(size_t *) msglen;
+		data = emalloc(rcvd);
+
+		do {
+			int oldrcvd = rcvd;
+			rcvd -= php_stream_read(PHPDBG_G(socket_client_stream), &(data[(*(int *) msglen) - rcvd]), rcvd);
+
+			if (oldrcvd == rcvd) {
+				efree(data);
+				goto read_error;
+			}
+		} while (rcvd > 0);
+
+		phpdbg_webdata_decompress(data, *(int *) msglen TSRMLS_CC);
+
+		efree(data);
+
+		phpdbg_notice("wait", "import=\"success\"", "Successfully imported request data, stopped before executing");
 	}
 
-	rlen = sizeof(remote);
-	sr = accept(sl, (struct sockaddr *) &remote, (socklen_t *) &rlen);
-
-	char msglen[5];
-	int recvd = 4;
-
-	do {
-		recvd -= recv(sr, &(msglen[4 - recvd]), recvd, 0);
-	} while (recvd > 0);
-
-	recvd = *(size_t *) msglen;
-	char *data = emalloc(recvd);
-
-	do {
-		recvd -= recv(sr, &(data[(*(int *) msglen) - recvd]), recvd, 0);
-	} while (recvd > 0);
-
-	phpdbg_webdata_decompress(data, *(int *) msglen TSRMLS_CC);
-
-	if (PHPDBG_G(socket_fd) != -1) {
-		close(PHPDBG_G(socket_fd));
+	if (0) {
+read_error:
+		php_stream_close(PHPDBG_G(socket_client_stream));
+		PHPDBG_G(socket_client_stream) = NULL;
+		phpdbg_error("wait", "type=\"nosocket\" import=\"fail\" socket=\"%s\" reason=\"%s\"", "Unable to read from %s (%s)", PHPDBG_G(socket_path), "Connection was aborted by client");
 	}
-	PHPDBG_G(socket_fd) = sr;
 
-	efree(data);
-
-	phpdbg_notice("wait", "import=\"success\"", "Successfully imported request data, stopped before executing");
+	if (errstr) {
+		efree(errstr);
+	}
 
 	return SUCCESS;
 } /* }}} */

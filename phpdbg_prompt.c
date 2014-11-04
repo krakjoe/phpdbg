@@ -693,9 +693,9 @@ PHPDBG_COMMAND(run) /* {{{ */
 			}
 		} zend_end_try();
 
-		if (PHPDBG_G(socket_fd) != -1) {
-			close(PHPDBG_G(socket_fd));
-			PHPDBG_G(socket_fd) = -1;
+		if (PHPDBG_G(socket_client_stream)) {
+			php_stream_close(PHPDBG_G(socket_client_stream));
+			PHPDBG_G(socket_client_stream) = NULL;
 		}
 
 		if (restore) {

@@ -90,8 +90,8 @@ static inline void php_phpdbg_globals_ctor(zend_phpdbg_globals *pg) /* {{{ */
 	memset(pg->io, 0, sizeof(pg->io));
 	pg->frame.num = 0;
 	pg->sapi_name_ptr = NULL;
-	pg->socket_fd = -1;
-	pg->socket_server_fd = -1;
+	pg->socket_client_stream = NULL;
+	pg->socket_server_stream = NULL;
 
 	pg->req_id = 0;
 	pg->err_buf.active = 0;
@@ -614,8 +614,8 @@ static void php_sapi_phpdbg_register_vars(zval *track_vars_array TSRMLS_DC) /* {
 
 static inline int php_sapi_phpdbg_ub_write(const char *message, unsigned int length TSRMLS_DC) /* {{{ */
 {
-	if (PHPDBG_G(socket_fd) != -1 && !(PHPDBG_G(flags) & PHPDBG_IS_INTERACTIVE)) {
-		send(PHPDBG_G(socket_fd), message, length, 0);
+	if (PHPDBG_G(socket_client_stream) != NULL && !(PHPDBG_G(flags) & PHPDBG_IS_INTERACTIVE)) {
+		php_stream_write(PHPDBG_G(socket_client_stream), message, length);
 	}
 	return phpdbg_script(P_STDOUT, "%.*s", length, message);
 } /* }}} */
@@ -1582,6 +1582,15 @@ phpdbg_out:
 		phpdbg_error("segfault", "", "Access violation (Segementation fault) encountered\ntrying to abort cleanly...");
 	}
 #endif
+
+		if (PHPDBG_G(socket_client_stream)) {
+			php_stream_close(PHPDBG_G(socket_client_stream));
+			PHPDBG_G(socket_client_stream) = NULL;
+		}
+		if (PHPDBG_G(socket_server_stream)) {
+			php_stream_close(PHPDBG_G(socket_server_stream));
+			PHPDBG_G(socket_server_stream) = NULL;
+		}
 
 		if (cleaning <= 0) {
 			PHPDBG_G(flags) &= ~PHPDBG_IS_CLEANING;

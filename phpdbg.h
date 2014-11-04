@@ -283,8 +283,9 @@ ZEND_BEGIN_MODULE_GLOBALS(phpdbg)
 
 	char *socket_path;                           /* phpdbg.path ini setting */
 	char *sapi_name_ptr;                         /* store sapi name to free it if necessary to not leak memory */
-	int socket_fd;                               /* file descriptor to socket (wait command) (-1 if unused) */
-	int socket_server_fd;                        /* file descriptor to master socket (wait command) (-1 if unused) */
+	php_stream *socket_client_stream;            /* client stream (wait command) (NULL if unused) */
+	php_stream *socket_server_stream;            /* server stream (wait command) (NULL if unused) */
+
 #ifdef PHP_WIN32
 	HANDLE sigio_watcher_thread;                 /* sigio watcher thread handle */
 	struct win32_sigio_watcher_data swd;

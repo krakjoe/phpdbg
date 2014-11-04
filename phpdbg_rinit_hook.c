@@ -18,7 +18,7 @@
 
 #include "phpdbg_rinit_hook.h"
 #include "php_ini.h"
-#include <errno.h>
+#include "ext/standard/file.h"
 
 ZEND_DECLARE_MODULE_GLOBALS(phpdbg_webhelper);
 
@@ -52,43 +52,38 @@ static PHP_RINIT_FUNCTION(phpdbg_webhelper) /* {{{ */
 		return SUCCESS;
 	}
 
-#ifndef _WIN32
 	{
-		struct sockaddr_un sock;
-		int s = socket(AF_UNIX, SOCK_STREAM, 0);
-		int len = strlen(PHPDBG_WG(path)) + sizeof(sock.sun_family);
-		char buf[(1 << 8) + 1];
-		int buflen;
-		sock.sun_family = AF_UNIX;
-		strcpy(sock.sun_path, PHPDBG_WG(path));
-
-		if (connect(s, (struct sockaddr *)&sock, len) == -1) {
-/*			zend_error(E_ERROR, "Unable to connect to UNIX domain socket at %s defined by phpdbg.path ini setting. Reason: %s", PHPDBG_WG(path), strerror(errno)); */
-			free(sock.sun_path);
-			close(s);
-
-			return SUCCESS;
-		}
+		char *host = PHPDBG_WG(path);
+		int host_len = strlen(host);
+		struct timeval tv;
+		php_stream *stream;
+		int err;
+		char *errstr = NULL;
 
 		char *msg = NULL;
 		char msglen[5] = {0};
-		phpdbg_webdata_compress(&msg, (int *)msglen TSRMLS_CC);
 
-		send(s, msglen, 4, 0);
-		send(s, msg, *(int *) msglen, 0);
+		tv.tv_sec = 60;
+		tv.tv_usec = 0;
 
-		while ((buflen = recv(s, buf, sizeof(buf) - 1, 0)) > 0) {
-			php_write(buf, buflen TSRMLS_CC);
+		stream = php_stream_xport_create(host, host_len, REPORT_ERRORS, STREAM_XPORT_CLIENT | STREAM_XPORT_CONNECT, NULL, &tv, NULL, &errstr, &err);
+
+		if (stream == NULL) {
+/*			zend_error(E_ERROR, "Unable to connect to UNIX domain socket at %s defined by phpdbg.path ini setting. Reason: %s", PHPDBG_WG(path), strerror(errno)); */
+			return SUCCESS;
 		}
 
-		close(s);
+		phpdbg_webdata_compress(&msg, (int *) msglen TSRMLS_CC);
 
-		free(sock.sun_path);
+		php_stream_write(stream, msglen, 4);
+		php_stream_write(stream, msg, *(int *) msglen);
+
+		php_stream_passthru(stream);
+		php_stream_close(stream);
 
 		php_output_flush_all(TSRMLS_C);
 		zend_bailout();
 	}
-#endif
 
 	return SUCCESS;
 } /* }}} */

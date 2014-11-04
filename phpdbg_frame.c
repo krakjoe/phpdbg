@@ -26,6 +26,10 @@
 
 ZEND_EXTERN_MODULE_GLOBALS(phpdbg);
 
+#if PHP_VERSION_ID < 50600
+ZEND_EXTERN_MODULE_GLOBALS(output);
+#endif
+
 void phpdbg_restore_frame(TSRMLS_D) /* {{{ */
 {
 	if (PHPDBG_FRAME(num) == 0) {

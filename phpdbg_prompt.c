@@ -43,6 +43,10 @@
 ZEND_EXTERN_MODULE_GLOBALS(phpdbg);
 extern int phpdbg_startup_run;
 
+#if PHP_VERSION_ID < 50600
+ZEND_EXTERN_MODULE_GLOBALS(output);
+#endif
+
 #ifdef HAVE_LIBDL
 #ifdef PHP_WIN32
 #include "win32/param.h"

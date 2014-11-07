@@ -629,11 +629,11 @@ PHPDBG_API void phpdbg_set_breakpoint_method_opline(const char *class, const cha
 
 	switch (phpdbg_resolve_opline_break(&new_break TSRMLS_CC)) {
 		case FAILURE:
-			phpdbg_notice("breakpoint", "pending=\"pending\" id=\"%d\" method=\"%::%s\" num=\"%ld\"", "Pending breakpoint #%d at %s::%s#%ld", new_break.id, new_break.class_name, new_break.func_name, opline);
+			phpdbg_notice("breakpoint", "pending=\"pending\" id=\"%d\" method=\"%s::%s\" num=\"%ld\"", "Pending breakpoint #%d at %s::%s#%ld", new_break.id, new_break.class_name, new_break.func_name, opline);
 			break;
 
 		case SUCCESS:
-			phpdbg_notice("breakpoint", "id=\"%d\" method=\"%::%s\" num=\"%ld\"", "Breakpoint #%d added at %s::%s#%ld", new_break.id, new_break.class_name, new_break.func_name, opline);
+			phpdbg_notice("breakpoint", "id=\"%d\" method=\"%s::%s\" num=\"%ld\"", "Breakpoint #%d added at %s::%s#%ld", new_break.id, new_break.class_name, new_break.func_name, opline);
 			break;
 
 		case 2:

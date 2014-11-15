@@ -1313,7 +1313,7 @@ PHPDBG_API void phpdbg_print_breakpoint(phpdbg_breakbase_t *brake TSRMLS_DC) /* 
 		} break;
 
 		case PHPDBG_BREAK_SYM: {
-			phpdbg_notice("breakpoint", "id=\"%d\" function=\"%s\" file=\"%s\" line=\"%ld\" hits=\"%lu\"", "Breakpoint #%d in %s() at %s:%u, hits: %lu",
+			phpdbg_notice("breakpoint", "id=\"%d\" function=\"%s\" file=\"%s\" line=\"%u\" hits=\"%lu\"", "Breakpoint #%d in %s() at %s:%u, hits: %lu",
 				((phpdbg_breaksymbol_t*)brake)->id,
 				((phpdbg_breaksymbol_t*)brake)->symbol,
 				zend_get_executed_filename(TSRMLS_C),
@@ -1322,7 +1322,7 @@ PHPDBG_API void phpdbg_print_breakpoint(phpdbg_breakbase_t *brake TSRMLS_DC) /* 
 		} break;
 
 		case PHPDBG_BREAK_OPLINE: {
-			phpdbg_notice("breakpoint", "id=\"%d\" opline=\"%#lx\" file=\"%s\" line=\"%ld\" hits=\"%lu\"", "Breakpoint #%d in %#lx at %s:%u, hits: %lu",
+			phpdbg_notice("breakpoint", "id=\"%d\" opline=\"%#lx\" file=\"%s\" line=\"%u\" hits=\"%lu\"", "Breakpoint #%d in %#lx at %s:%u, hits: %lu",
 				((phpdbg_breakline_t*)brake)->id,
 				((phpdbg_breakline_t*)brake)->opline,
 				zend_get_executed_filename(TSRMLS_C),

@@ -1,6 +1,8 @@
 phpdbg XML format
 =================
 
+Generally, phpdbg is the server and a client connects to it. The client then will receive a few &lt;intro> tags and then can start sending actual commands.
+
 Common attributes
 =================
 
@@ -152,10 +154,12 @@ Commands
 
 export
 ------
+exports all breakpoints to the specified file (TODO: export to stdout for IDE)
 
-- tag: &lt;exportbreakpoint />
-- usually triggered by successful export command
-- may appear when cleaning to temporary store breakpoints
+    > export /my/breakpoints
+    <exportbreakpoint />
+
+- &lt;exportbreakpoint />
 - errors by type
  - openfailure: could not create file
 
@@ -168,13 +172,87 @@ break / info break
 
 - General tag for breakpoint creation, deletion and hits is "&lt;breakpoint />"
 
+break execution at line 100 of test.php
+
+    >  break test.php:100
+    <breakpoint severity="notice" add="success" id="0" file="test.php" line="100" />
+
+break execution at line 200 of the currently PHP script file
+
+    > exec test.php
+    (The execution context is now test.php, now we can break on a line without filename)
+    > break 200
+    <breakpoint severity="notice" add="success" id="0" file="test.php" line="200" />
+
+break execution on entry to \mynamespace\my_function
+
+    > break \mynamespace\my_function
+    <breakpoint severity="notice" add="success" id="0" function="\mynamespace\my_function" />
+
+Break execution on entry to classX::method
+
+    > break classX::method
+    <breakpoint severity="notice" add="success" id="0" method="classX::method" />
+
+Break at the opline at the address 0x7ff68f570e08
+
+    > break 0x7ff68f570e08
+    <breakpoint severity="notice" add="success" id="0" opline="0x7ff68f570e08" />
+
+Break at the opline #14 of the function my_function
+
+    > break my_function#14
+    <breakpoint severity="notice" id="0" function="my_function" num="14" />
+
+Break at the opline #2 of the method \my\class::method
+
+    > break \my\class::method#2
+    <breakpoint severity="notice" id="0" method="\my\class::method" num="2" />
+
+Break at opline #3 in test.php
+
+    > break test.php:#3
+    <breakpoint severity="notice" id="0" file="test.php" num="3" />
+
+Break when the condition ($cnt > 10) evaluates to true
+
+    > break if $cnt > 10
+    <breakpoint severity="notice" id="0" expression="$cnt > 10" ptr="0x100969a58" />
+
+Break at any opcode in phpdbg::isGreat when the condition ($opt == 'S') is true
+
+    > break at phpdbg::isGreat if $opt == 'S'
+    <breakpoint severity="notice" id="0" expression="$opt == 'S'" ptr="0x10096d0f8" />
+
+Break at every opcode on line 20 of test.php when the condition evaluates to true
+
+    prompt>  break at test.php:20 if !isset($x)
+    <breakpoint severity="notice" id="0" expression="!isset($x)" ptr="0x1009fd0c8" />
+
+Break on any occurrence of the opcode ZEND_ADD
+
+    > break ZEND_ADD
+    <breakpoint severity="notice" id="5" opcode="ZEND_ADD" />
+
+Remove breakpoint 2
+
+    > break del 2
+    <breakpoint severity="notice" deleted="success" id="2" />
+
+When hitting breakpoint (example file with function f being defined on line 2)
+
+    > break f
+    > run
+    <breakpoint severity="notice" id="0" function="f" file="/path/to/my/file.php" line="2" hits="1" />
+    (is followed by implicit "list 3" command output)
+
 ### possible attributes ###
 
 - id: the breakpoint id (if the leave command was executed, the id has the value "leave")
 - num: the nth opline of a function/method/file
-- add: has value "success"/"fail": a brekpoint was successfully/not added
-- pending: the breakpoint is waiting for resolving (e.g. a file opline on a not yet loaded file)
-- deleted: has value "success"/"fail": a breakpoint was successfully/not deleted
+- add: has value "success"/"fail": a brekpoint was successfully added or not
+- pending: the breakpoint is waiting for resolving (e.g. a line number or a file/method/function opline number on a not yet loaded file)
+- deleted: has value "success"/"fail": a breakpoint was successfully deleted or not
 - eval: the condition on conditional breakpoints
 - file
 - opline
@@ -183,7 +261,6 @@ break / info break
 - function
 - method
 - line
-
 
 - listing breakpoints always in a container element "&lt;breakpoints>"
  - Child nodes:
@@ -214,13 +291,44 @@ break / info break
  - notregular: tries to set a breakpoint in not a regular file
  - (invalidparameter: should not happen: is an internal error)
 
-frame
------
+back / frame
+------------
 
 - General tag for frames is "&lt;frame>"
 - always has id attribute; if it only has id attribute, it just indicates current frame number, no other elements follow
 - may contain other elements (of type &lt;arg>) when contained in &lt;backtrace> tag
 - &lt;arg> always contains a &lt;stream> element, the value of the variable
+
+We execute this code to illustrate:
+
+    <?php
+    function f($a, $b = 1) {
+        return $a + $b;
+    }
+    print call_user_func("f", 2);
+
+Then:
+
+    > break f
+    > run
+    (see under break section for xml answers)
+    > back
+    <backtrace>
+        <frame id="0" file="/Users/Bob/phpdbg/t.php" line="2" symbol="f">
+            <arg variadic="" name="a">
+                <int refstatus="" value="2" />
+            </arg>
+        </frame>
+        <frame id="1" internal="internal" symbol="call_user_func">
+            <arg variadic="" name="function_name">
+                <string refstatus="" length="1" value="f" />
+            </arg>
+            <arg variadic="variadic" name="parameters">
+                <int refstatus="" value="2" />
+            </arg>
+        </frame>
+        <frame severity="normal" id="1" symbol="{main}" file="/Users/Bob/phpdbg/t.php" line="5" />
+    </backtrace>
 
 ### possible attributes ###
 

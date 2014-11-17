@@ -226,7 +226,7 @@ Break at any opcode in phpdbg::isGreat when the condition ($opt == 'S') is true
 
 Break at every opcode on line 20 of test.php when the condition evaluates to true
 
-    prompt>  break at test.php:20 if !isset($x)
+    >  break at test.php:20 if !isset($x)
     <breakpoint severity="notice" id="0" expression="!isset($x)" ptr="0x1009fd0c8" />
 
 Break on any occurrence of the opcode ZEND_ADD

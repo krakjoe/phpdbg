@@ -30,7 +30,22 @@ Planned
 Installation
 ============
 
-To install **phpdbg**, you must compile the source against your PHP installation sources, and enable the SAPI with the configure command.
+**phpdbg** is already installed with PHP 5.6.x.
+
+On a *nix machine (assuming PHP 5.6.x is installed):
+```
+which phpdbg
+```
+It should return the location. You can start **phpdbg** by using the result like the following:
+```
+$ /path/to/phpdbg
+[Welcome to phpdbg, the interactive PHP debugger, v0.4.0]
+To get help using phpdbg type "help" and press enter
+[Please report bugs to <http://github.com/krakjoe/phpdbg/issues>]
+phpdbg>
+```
+
+For previous versions of PHP, to install **phpdbg**, you must compile the source against your PHP installation sources, and enable the SAPI with the configure command.
 
 ```
 cd /usr/src/php-src/sapi

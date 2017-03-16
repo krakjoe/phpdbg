@@ -7,6 +7,13 @@ phpdbg aims to be a lightweight, powerful, easy to use debugging platform for PH
 
 [![phpdbg on travis-ci](https://travis-ci.org/krakjoe/phpdbg.png?branch=master)](https://travis-ci.org/krakjoe/phpdbg)
 
+Historical Repository
+=====================
+
+phpdbg was developed here, then merged into [php-src](https://github.com/php/php-src): This repository is no longer used.
+
+__Please open issues on [bugsnet](http://bugs.php.net), and send pull requests directly to [php-src](https://github.com/php/php-src).__
+
 Features
 ========
 

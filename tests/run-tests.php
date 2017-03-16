@@ -455,21 +455,21 @@ namespace phpdbg\testing {
 					switch ($this->expect) {
 						case TEST::EXACT: {
 							if (strcmp($line, $this->match[$num]) !== 0) {
-								$this->diff['wants'][$num] = &$this->match[$num];
+								$this->diff['wants'][$num] = $this->match[$num];
 								$this->diff['gets'][$num] = $line;
 							}
 						} continue 2;
 
 						case TEST::STRING: {
 							if (strpos($line, $this->match[$num]) === false) {
-								$this->diff['wants'][$num] = &$this->match[$num];
+								$this->diff['wants'][$num] = $this->match[$num];
 								$this->diff['gets'][$num] = $line;
 							}
 						} continue 2;
 						
 						case TEST::CISTRING: {
 							if (stripos($line, $this->match[$num]) === false) {
-								$this->diff['wants'][$num] = &$this->match[$num];
+								$this->diff['wants'][$num] = $this->match[$num];
 								$this->diff['gets'][$num] = $line;
 							}
 						} continue 2;
@@ -477,7 +477,7 @@ namespace phpdbg\testing {
 						case TEST::FORMAT: {
 							$line = trim($line);
 							if (!preg_match("/^{$this->match[$num]}\$/s", $line)) {
-								$this->diff['wants'][$num] = &$this->match[$num];
+								$this->diff['wants'][$num] = $this->match[$num];
 								$this->diff['gets'][$num] = $line;
 							}
 						} continue 2;

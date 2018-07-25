@@ -81,10 +81,3 @@ The following switches change the default behaviour of phpdbg:
  - -S override SAPI name
 
 **Note:** Passing -rr will cause phpdbg to quit after execution, rather than returning to the console.
-
-Getting Started
-===============
-
-See the website for tutorials/documentation
-
-http://phpdbg.com

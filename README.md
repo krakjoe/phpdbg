@@ -87,4 +87,4 @@ Getting Started
 
 See the website for tutorials/documentation
 
-http://phpdbg.com
+http://php.net/phpdbg
